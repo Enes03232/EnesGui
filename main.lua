@@ -174,8 +174,9 @@ end)
 -- Players Tab Content
 local selectedPlayer = nil
 local playerButtons = {}
+local isTrollButtonActive = false
 
--- Troll Button at Top (BEYAZ METİN)
+-- Troll Button at Top
 local trollPlayerButton = Instance.new("TextButton")
 trollPlayerButton.Name = "TrollPlayerButton"
 trollPlayerButton.Size = UDim2.new(1, -20, 0, 40)
@@ -185,7 +186,7 @@ trollPlayerButton.Font = Enum.Font.GothamBold
 trollPlayerButton.TextSize = 18
 trollPlayerButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 trollPlayerButton.BackgroundTransparency = 0.3
-trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- BEYAZ RENK
+trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 trollPlayerButton.Parent = contentFrames["Players"]
 Instance.new("UICorner", trollPlayerButton).CornerRadius = UDim.new(0, 6)
 
@@ -205,8 +206,8 @@ listLayout.Padding = UDim.new(0, 5)
 
 -- Troll Sub Panel
 local trollSubPanel = Instance.new("Frame")
-trollSubPanel.Size = UDim2.new(0, 200, 0, 150)
-trollSubPanel.Position = UDim2.new(1, 10, 0, 60)
+trollSubPanel.Size = UDim2.new(0, 200, 0, 350)
+trollSubPanel.Position = UDim2.new(1, 15, 0, 0)
 trollSubPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 trollSubPanel.BackgroundTransparency = 0.2
 trollSubPanel.BorderSizePixel = 0
@@ -219,38 +220,53 @@ subPanelTitle.Size = UDim2.new(1, 0, 0, 30)
 subPanelTitle.Text = "TROLL MENÜSÜ"
 subPanelTitle.Font = Enum.Font.GothamBold
 subPanelTitle.TextSize = 16
-subPanelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+spawn(function()
+    while true do
+        subPanelTitle.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        wait(0.05)
+    end
+end)
 subPanelTitle.BackgroundTransparency = 1
 subPanelTitle.Parent = trollSubPanel
 
--- Follow Button
-local followButton = Instance.new("TextButton")
-followButton.Size = UDim2.new(0.8, 0, 0, 30)
-followButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-followButton.Text = "TAKİP ET"
-followButton.Font = Enum.Font.Gotham
-followButton.TextSize = 14
-followButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-followButton.BackgroundTransparency = 0.3
-followButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-followButton.Parent = trollSubPanel
-Instance.new("UICorner", followButton).CornerRadius = UDim.new(0, 4)
+-- Panel ve troll menüsü pozisyon güncelleme
+local function updateTrollPanelPosition()
+    if panel and trollSubPanel then
+        local panelSize = panel.AbsoluteSize.X
+        trollSubPanel.Position = UDim2.new(1, 15, 0, 0)
+    end
+end
+
+panel:GetPropertyChangedSignal("Position"):Connect(updateTrollPanelPosition)
+panel:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateTrollPanelPosition)
+
+-- RGB efekti fonksiyonu
+local function updateTrollButtonColor()
+    while isTrollButtonActive do
+        trollPlayerButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        wait(0.05)
+    end
+    trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+end
 
 -- Button effects
 trollPlayerButton.MouseEnter:Connect(function()
     trollPlayerButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- BEYAZ KALACAK
 end)
 
 trollPlayerButton.MouseLeave:Connect(function()
     trollPlayerButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255) -- BEYAZ KALACAK
 end)
 
 -- Troll button click
 trollPlayerButton.MouseButton1Click:Connect(function()
     if selectedPlayer then
         trollSubPanel.Visible = not trollSubPanel.Visible
+        isTrollButtonActive = trollSubPanel.Visible
+        
+        if isTrollButtonActive then
+            spawn(updateTrollButtonColor)
+        end
     else
         trollPlayerButton.Text = "ÖNCE OYUNCU SEÇ!"
         wait(2)
@@ -258,17 +274,179 @@ trollPlayerButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Follow button function
-followButton.MouseButton1Click:Connect(function()
-    if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        
-        humanoidRootPart.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-        followButton.Text = "TAKİP EDİLİYOR!"
-        wait(1)
-        followButton.Text = "TAKİP ET"
+-- İZLE (SPECTATE) BUTONU (RGB efekti eklendi)
+local spectating = false
+local oldCameraSubject = nil
+
+local spectateButton = Instance.new("TextButton")
+spectateButton.Size = UDim2.new(0.8, 0, 0, 30)
+spectateButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+spectateButton.Text = "İZLE"
+spectateButton.Font = Enum.Font.Gotham
+spectateButton.TextSize = 14
+spectateButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+spectateButton.BackgroundTransparency = 0.3
+spectateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+spectateButton.Parent = trollSubPanel
+Instance.new("UICorner", spectateButton).CornerRadius = UDim.new(0, 4)
+
+local spectateRGB = false
+
+spectateButton.MouseButton1Click:Connect(function()
+    if selectedPlayer and selectedPlayer.Character then
+        local cam = workspace.CurrentCamera
+        if not spectating then
+            oldCameraSubject = cam.CameraSubject
+            cam.CameraSubject = selectedPlayer.Character:FindFirstChild("Humanoid")
+            spectateButton.Text = "İZLEMEYİ BIRAK"
+            spectating = true
+            spectateRGB = true
+            
+            -- RGB efekti başlat
+            spawn(function()
+                while spectateRGB do
+                    spectateButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                    wait(0.05)
+                end
+                spectateButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end)
+        else
+            cam.CameraSubject = oldCameraSubject
+            spectateButton.Text = "İZLE"
+            spectating = false
+            spectateRGB = false
+        end
     end
+end)
+
+-- TELEPORT BUTONU (RGB efekti eklendi)
+local teleportButton = Instance.new("TextButton")
+teleportButton.Size = UDim2.new(0.8, 0, 0, 30)
+teleportButton.Position = UDim2.new(0.1, 0, 0.35, 0)
+teleportButton.Text = "TELEPORT"
+teleportButton.Font = Enum.Font.Gotham
+teleportButton.TextSize = 14
+teleportButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+teleportButton.BackgroundTransparency = 0.3
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.Parent = trollSubPanel
+Instance.new("UICorner", teleportButton).CornerRadius = UDim.new(0, 4)
+
+teleportButton.MouseButton1Click:Connect(function()
+    if selectedPlayer and selectedPlayer.Character and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myChar = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+        local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+        if myHRP then
+            -- RGB efekti başlat (2 saniye)
+            spawn(function()
+                local startTime = tick()
+                while tick() - startTime < 2 do
+                    teleportButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                    wait(0.05)
+                end
+                teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end)
+            
+            myHRP.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
+        end
+    end
+end)
+
+-- GELİŞMİŞ FLING BUTONU (Konum Hatırlamalı)
+local flingButton = Instance.new("TextButton")
+flingButton.Size = UDim2.new(0.8, 0, 0, 30)
+flingButton.Position = UDim2.new(0.1, 0, 0.5, 0)
+flingButton.Text = "FLING"
+flingButton.Font = Enum.Font.Gotham
+flingButton.TextSize = 14
+flingButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+flingButton.BackgroundTransparency = 0.3
+flingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+flingButton.Parent = trollSubPanel
+Instance.new("UICorner", flingButton).CornerRadius = UDim.new(0, 4)
+
+local flingInProgress = false
+
+flingButton.MouseButton1Click:Connect(function()
+    if not selectedPlayer or not selectedPlayer.Character or not selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local myChar = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+    local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return end
+    
+    -- FLING ÖNCESİ KONUMU KAYDET
+    local originalPosition = myHRP.CFrame
+    local targetHRP = selectedPlayer.Character.HumanoidRootPart
+    
+    flingInProgress = true
+    flingButton.Text = "FLING ATILIYOR..."
+
+    -- RGB efekti başlat
+    spawn(function()
+        while flingInProgress do
+            flingButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+            wait(0.05)
+        end
+        flingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+
+    spawn(function()
+        local startTime = tick()
+        local spinSpeed = 100 -- Başlangıç dönüş hızı
+        local maxForce = 5000 -- Maksimum fırlatma gücü
+        
+        -- FLING HAZIRLIK
+        myHRP.Anchored = true
+        myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -2)
+        myHRP.Anchored = false
+        wait(0.1)
+        
+        -- FLING ATMA DÖNGÜSÜ
+        while flingInProgress and tick() - startTime < 3 do -- Max 3 saniye
+            -- HIZLI DÖNÜŞ + FIRLATMA
+            spinSpeed = spinSpeed + 20 -- Her döngüde hızı artır
+            myHRP.CFrame = myHRP.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+            
+            -- GÜÇLÜ FIRLATMA
+            myHRP.Velocity = Vector3.new(0, maxForce, 0)
+            targetHRP.Velocity = Vector3.new(
+                math.random(-maxForce/2, maxForce/2),
+                maxForce,
+                math.random(-maxForce/2, maxForce/2)
+            )
+            
+            -- HEDEFİ TAKİP ET
+            myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -2) * CFrame.Angles(0, math.rad(spinSpeed), 0)
+            
+            -- BAŞARI KONTROLÜ (Hedef yeterince yüksekte mi?)
+            if targetHRP.Position.Y > 500 then -- Yükseklik kontrolü
+                flingInProgress = false
+                break
+            end
+            
+            wait()
+        end
+
+        -- FLING BİTİŞ İŞLEMLERİ
+        flingInProgress = false
+        
+        -- KARAKTERİ ESKİ KONUMUNA IŞINLA
+        myHRP.Anchored = true
+        myHRP.CFrame = originalPosition
+        myHRP.Anchored = false
+        
+        -- BUTON DURUM GÜNCELLEME
+        if targetHRP.Position.Y > 500 then
+            flingButton.Text = "FLING BAŞARILI!"
+            flingButton.TextColor3 = Color3.fromRGB(0, 255, 0)
+        else
+            flingButton.Text = "FLING BAŞARISIZ"
+            flingButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+        end
+        wait(1.5)
+        flingButton.Text = "FLING"
+        flingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
 end)
 
 -- Player selection functions
@@ -329,6 +507,7 @@ Players.PlayerRemoving:Connect(function(player)
         if selectedPlayer == player then
             selectedPlayer = nil
             trollSubPanel.Visible = false
+            isTrollButtonActive = false
         end
     end
 end)
@@ -364,6 +543,12 @@ local isVisible = false
 toggleButton.MouseButton1Click:Connect(function()
     isVisible = not isVisible
     panel.Visible = isVisible
+    if not isVisible then
+        trollSubPanel.Visible = false
+        isTrollButtonActive = false
+    else
+        updateTrollPanelPosition()
+    end
 end)
 
 -- Draggable Toggle Button
@@ -414,3 +599,6 @@ UserInputService.InputEnded:Connect(function(input)
         dragging = false
     end
 end)
+
+-- İlk pozisyon ayarı
+updateTrollPanelPosition()
