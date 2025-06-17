@@ -29,7 +29,6 @@ titleBar.TextColor3 = Color3.fromRGB(255, 0, 255)
 titleBar.TextStrokeTransparency = 0.7
 titleBar.Parent = panel
 
--- RGB Title Effect
 spawn(function()
     while true do
         titleBar.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
@@ -67,7 +66,7 @@ Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 8)
 local tabButtons = {}
 local contentFrames = {}
 
-local tabs = {"Troll", "Players"}
+local tabs = {"Players", "Komutlar"}
 
 for _, tabName in ipairs(tabs) do
     local button = Instance.new("TextButton")
@@ -97,86 +96,174 @@ for _, tabName in ipairs(tabs) do
     end)
 end
 
--- Default to Troll tab
-contentFrames["Troll"].Visible = true
+contentFrames["Players"].Visible = true
 
--- Troll Tab Content
-local trollButton = Instance.new("TextButton")
-trollButton.Name = "JerkOffButton"
-trollButton.Size = UDim2.new(0.8, 0, 0.15, 0)
-trollButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-trollButton.Text = "Jerk Off R6"
-trollButton.Font = Enum.Font.GothamBold
-trollButton.TextSize = 20
-trollButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-trollButton.BackgroundTransparency = 0.3
-trollButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-trollButton.Parent = contentFrames["Troll"]
-Instance.new("UICorner", trollButton).CornerRadius = UDim.new(0, 8)
+-- Komutlar Tab Content
+local komutlarFrame = contentFrames["Komutlar"]
 
--- Button effects
-trollButton.MouseEnter:Connect(function()
-    trollButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    trollButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-end)
+local komutlarList = Instance.new("Frame")
+komutlarList.Size = UDim2.new(1, -20, 1, -20)
+komutlarList.Position = UDim2.new(0, 10, 0, 10)
+komutlarList.BackgroundTransparency = 1
+komutlarList.Parent = komutlarFrame
 
-trollButton.MouseLeave:Connect(function()
-    trollButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    trollButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-end)
+local komutlarLayout = Instance.new("UIListLayout")
+komutlarLayout.Parent = komutlarList
+komutlarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+komutlarLayout.Padding = UDim.new(0, 10)
 
--- Button function
-trollButton.MouseButton1Click:Connect(function()
-    trollButton.Text = "Loading..."
-    
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if not character or not character.Parent then
-        character = player.CharacterAdded:Wait()
+-- FLY SCRIPT
+local FlyActive = false
+local FlyRGB = false
+local FlyBtn = nil
+local FlyConn = nil
+local FlyBody = nil
+local FlyGyro = nil
+local FlyInput = nil
+local FlyInputEnd = nil
+
+local function FlyToggle()
+    if FlyActive then
+        FlyActive = false
+        FlyRGB = false
+        if FlyBtn then
+            FlyBtn.Text = "Fly"
+            FlyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        end
+        if FlyConn then FlyConn:Disconnect() end
+        if FlyBody then FlyBody:Destroy() end
+        if FlyGyro then FlyGyro:Destroy() end
+        if FlyInput then FlyInput:Disconnect() end
+        if FlyInputEnd then FlyInputEnd:Disconnect() end
+        return
     end
-    
-    local humanoid = character:WaitForChild("Humanoid")
-    
-    if humanoid.RigType == Enum.HumanoidRigType.R6 then
-        local anim1 = Instance.new("Animation")
-        anim1.AnimationId = "rbxassetid://148840371"
-        local anim2 = Instance.new("Animation")
-        anim2.AnimationId = "rbxassetid://148840423"
-        local anim3 = Instance.new("Animation")
-        anim3.AnimationId = "rbxassetid://148840456"
-        
-        local animationTrack1 = humanoid:LoadAnimation(anim1)
-        local animationTrack2 = humanoid:LoadAnimation(anim2)
-        local animationTrack3 = humanoid:LoadAnimation(anim3)
-        
-        trollButton.Text = "ACTIVE!"
-        trollButton.TextColor3 = Color3.fromRGB(0, 255, 0)
-        
-        spawn(function()
-            while trollButton.Text == "ACTIVE!" do
-                animationTrack1:Play()
-                wait(animationTrack1.Length)
-                animationTrack2:Play()
-                wait(animationTrack2.Length)
-                animationTrack3:Play()
-                wait(animationTrack3.Length)
+
+    FlyActive = true
+    FlyRGB = true
+    if FlyBtn then
+        FlyBtn.Text = "Fly (Aktif)"
+    end
+
+    spawn(function()
+        while FlyRGB do
+            if FlyBtn then
+                FlyBtn.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
             end
-        end)
-    else
-        trollButton.Text = "R6 ONLY!"
-        trollButton.TextColor3 = Color3.fromRGB(255, 0, 0)
-        wait(2)
-        trollButton.Text = "Jerk Off R6"
-        trollButton.TextColor3 = Color3.fromRGB(255, 50, 50)
+            wait(0.05)
+        end
+        if FlyBtn then
+            FlyBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        end
+    end)
+
+    local char = localPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+    bv.Velocity = Vector3.new(0,0,0)
+    bv.Parent = hrp
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    bg.CFrame = hrp.CFrame
+    bg.Parent = hrp
+
+    FlyBody = bv
+    FlyGyro = bg
+
+    local speed = 60
+    local move = {f=0,b=0,l=0,r=0,u=0,d=0}
+
+    FlyConn = game:GetService("RunService").RenderStepped:Connect(function()
+        if not FlyActive then return end
+        local cam = workspace.CurrentCamera
+        local cf = cam.CFrame
+        local vel = Vector3.new()
+        if move.f == 1 then vel = vel + cf.LookVector end
+        if move.b == 1 then vel = vel - cf.LookVector end
+        if move.l == 1 then vel = vel - cf.RightVector end
+        if move.r == 1 then vel = vel + cf.RightVector end
+        if move.u == 1 then vel = vel + Vector3.new(0,1,0) end
+        if move.d == 1 then vel = vel - Vector3.new(0,1,0) end
+        if vel.Magnitude > 0 then vel = vel.Unit * speed end
+        bv.Velocity = vel
+        bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cf.LookVector)
+    end)
+
+    local function onInput(input, gpe)
+        if gpe then return end
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            local k = input.KeyCode
+            if k == Enum.KeyCode.W then move.f = 1 end
+            if k == Enum.KeyCode.S then move.b = 1 end
+            if k == Enum.KeyCode.A then move.l = 1 end
+            if k == Enum.KeyCode.D then move.r = 1 end
+            if k == Enum.KeyCode.Space then move.u = 1 end
+            if k == Enum.KeyCode.LeftControl then move.d = 1 end
+        end
     end
-end)
+    local function onInputEnd(input, gpe)
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            local k = input.KeyCode
+            if k == Enum.KeyCode.W then move.f = 0 end
+            if k == Enum.KeyCode.S then move.b = 0 end
+            if k == Enum.KeyCode.A then move.l = 0 end
+            if k == Enum.KeyCode.D then move.r = 0 end
+            if k == Enum.KeyCode.Space then move.u = 0 end
+            if k == Enum.KeyCode.LeftControl then move.d = 0 end
+        end
+    end
+    FlyInput = UserInputService.InputBegan:Connect(onInput)
+    FlyInputEnd = UserInputService.InputEnded:Connect(onInputEnd)
+end
+
+local komutlarListesi = {
+    {
+        Name = "Fly",
+        Callback = FlyToggle
+    },
+    {
+        Name = "ESP",
+        Callback = function()
+            print("ESP aktif edildi!") -- Buraya esp kodunu ekleyebilirsin
+        end
+    },
+    {
+        Name = "Noclip",
+        Callback = function()
+            print("Noclip aktif edildi!") -- Buraya noclip kodunu ekleyebilirsin
+        end
+    },
+}
+
+for _, komut in ipairs(komutlarListesi) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Text = komut.Name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 18
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.BackgroundTransparency = 0.3
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Parent = komutlarList
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    btn.MouseButton1Click:Connect(function()
+        if komut.Name == "Fly" then
+            FlyBtn = btn
+            komut.Callback()
+        else
+            komut.Callback()
+        end
+    end)
+end
 
 -- Players Tab Content
 local selectedPlayer = nil
 local playerButtons = {}
 local isTrollButtonActive = false
 
--- Troll Button at Top
 local trollPlayerButton = Instance.new("TextButton")
 trollPlayerButton.Name = "TrollPlayerButton"
 trollPlayerButton.Size = UDim2.new(1, -20, 0, 40)
@@ -190,7 +277,6 @@ trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 trollPlayerButton.Parent = contentFrames["Players"]
 Instance.new("UICorner", trollPlayerButton).CornerRadius = UDim.new(0, 6)
 
--- Player List Below
 local playersList = Instance.new("ScrollingFrame")
 playersList.Size = UDim2.new(1, -20, 1, -60)
 playersList.Position = UDim2.new(0, 10, 0, 60)
@@ -204,7 +290,6 @@ listLayout.Parent = playersList
 listLayout.SortOrder = Enum.SortOrder.Name
 listLayout.Padding = UDim.new(0, 5)
 
--- Troll Sub Panel
 local trollSubPanel = Instance.new("Frame")
 trollSubPanel.Size = UDim2.new(0, 200, 0, 350)
 trollSubPanel.Position = UDim2.new(1, 15, 0, 0)
@@ -229,10 +314,8 @@ end)
 subPanelTitle.BackgroundTransparency = 1
 subPanelTitle.Parent = trollSubPanel
 
--- Panel ve troll menüsü pozisyon güncelleme
 local function updateTrollPanelPosition()
     if panel and trollSubPanel then
-        local panelSize = panel.AbsoluteSize.X
         trollSubPanel.Position = UDim2.new(1, 15, 0, 0)
     end
 end
@@ -240,7 +323,6 @@ end
 panel:GetPropertyChangedSignal("Position"):Connect(updateTrollPanelPosition)
 panel:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateTrollPanelPosition)
 
--- RGB efekti fonksiyonu
 local function updateTrollButtonColor()
     while isTrollButtonActive do
         trollPlayerButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
@@ -249,7 +331,6 @@ local function updateTrollButtonColor()
     trollPlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 end
 
--- Button effects
 trollPlayerButton.MouseEnter:Connect(function()
     trollPlayerButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 end)
@@ -258,12 +339,10 @@ trollPlayerButton.MouseLeave:Connect(function()
     trollPlayerButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 end)
 
--- Troll button click
 trollPlayerButton.MouseButton1Click:Connect(function()
     if selectedPlayer then
         trollSubPanel.Visible = not trollSubPanel.Visible
         isTrollButtonActive = trollSubPanel.Visible
-        
         if isTrollButtonActive then
             spawn(updateTrollButtonColor)
         end
@@ -274,7 +353,6 @@ trollPlayerButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- İZLE (SPECTATE) BUTONU (RGB efekti eklendi)
 local spectating = false
 local oldCameraSubject = nil
 
@@ -301,8 +379,6 @@ spectateButton.MouseButton1Click:Connect(function()
             spectateButton.Text = "İZLEMEYİ BIRAK"
             spectating = true
             spectateRGB = true
-            
-            -- RGB efekti başlat
             spawn(function()
                 while spectateRGB do
                     spectateButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
@@ -319,7 +395,6 @@ spectateButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- TELEPORT BUTONU (RGB efekti eklendi)
 local teleportButton = Instance.new("TextButton")
 teleportButton.Size = UDim2.new(0.8, 0, 0, 30)
 teleportButton.Position = UDim2.new(0.1, 0, 0.35, 0)
@@ -337,7 +412,6 @@ teleportButton.MouseButton1Click:Connect(function()
         local myChar = localPlayer.Character or localPlayer.CharacterAdded:Wait()
         local myHRP = myChar:FindFirstChild("HumanoidRootPart")
         if myHRP then
-            -- RGB efekti başlat (2 saniye)
             spawn(function()
                 local startTime = tick()
                 while tick() - startTime < 2 do
@@ -346,13 +420,11 @@ teleportButton.MouseButton1Click:Connect(function()
                 end
                 teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             end)
-            
             myHRP.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(2, 0, 0)
         end
     end
 end)
 
--- GELİŞMİŞ FLING BUTONU (Konum Hatırlamalı)
 local flingButton = Instance.new("TextButton")
 flingButton.Size = UDim2.new(0.8, 0, 0, 30)
 flingButton.Position = UDim2.new(0.1, 0, 0.5, 0)
@@ -369,19 +441,13 @@ local flingInProgress = false
 
 flingButton.MouseButton1Click:Connect(function()
     if not selectedPlayer or not selectedPlayer.Character or not selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
     local myChar = localPlayer.Character or localPlayer.CharacterAdded:Wait()
     local myHRP = myChar:FindFirstChild("HumanoidRootPart")
     if not myHRP then return end
-    
-    -- FLING ÖNCESİ KONUMU KAYDET
     local originalPosition = myHRP.CFrame
     local targetHRP = selectedPlayer.Character.HumanoidRootPart
-    
     flingInProgress = true
     flingButton.Text = "FLING ATILIYOR..."
-
-    -- RGB efekti başlat
     spawn(function()
         while flingInProgress do
             flingButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
@@ -389,53 +455,34 @@ flingButton.MouseButton1Click:Connect(function()
         end
         flingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     end)
-
     spawn(function()
         local startTime = tick()
-        local spinSpeed = 100 -- Başlangıç dönüş hızı
-        local maxForce = 5000 -- Maksimum fırlatma gücü
-        
-        -- FLING HAZIRLIK
+        local spinSpeed = 100
+        local maxForce = 5000
         myHRP.Anchored = true
         myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -2)
         myHRP.Anchored = false
         wait(0.1)
-        
-        -- FLING ATMA DÖNGÜSÜ
-        while flingInProgress and tick() - startTime < 3 do -- Max 3 saniye
-            -- HIZLI DÖNÜŞ + FIRLATMA
-            spinSpeed = spinSpeed + 20 -- Her döngüde hızı artır
+        while flingInProgress and tick() - startTime < 3 do
+            spinSpeed = spinSpeed + 20
             myHRP.CFrame = myHRP.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
-            
-            -- GÜÇLÜ FIRLATMA
             myHRP.Velocity = Vector3.new(0, maxForce, 0)
             targetHRP.Velocity = Vector3.new(
                 math.random(-maxForce/2, maxForce/2),
                 maxForce,
                 math.random(-maxForce/2, maxForce/2)
             )
-            
-            -- HEDEFİ TAKİP ET
             myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -2) * CFrame.Angles(0, math.rad(spinSpeed), 0)
-            
-            -- BAŞARI KONTROLÜ (Hedef yeterince yüksekte mi?)
-            if targetHRP.Position.Y > 500 then -- Yükseklik kontrolü
+            if targetHRP.Position.Y > 500 then
                 flingInProgress = false
                 break
             end
-            
             wait()
         end
-
-        -- FLING BİTİŞ İŞLEMLERİ
         flingInProgress = false
-        
-        -- KARAKTERİ ESKİ KONUMUNA IŞINLA
         myHRP.Anchored = true
         myHRP.CFrame = originalPosition
         myHRP.Anchored = false
-        
-        -- BUTON DURUM GÜNCELLEME
         if targetHRP.Position.Y > 500 then
             flingButton.Text = "FLING BAŞARILI!"
             flingButton.TextColor3 = Color3.fromRGB(0, 255, 0)
@@ -449,7 +496,6 @@ flingButton.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Player selection functions
 local function createPlayerButton(player)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, 0, 0, 30)
@@ -461,7 +507,6 @@ local function createPlayerButton(player)
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.Parent = playersList
     Instance.new("UICorner", button).CornerRadius = UDim.new(0, 4)
-
     button.MouseButton1Click:Connect(function()
         if selectedPlayer == player then
             selectedPlayer = nil
@@ -473,11 +518,9 @@ local function createPlayerButton(player)
             selectedPlayer = player
         end
     end)
-
     playerButtons[player] = button
 end
 
--- RGB effect for selected player
 spawn(function()
     while true do
         if selectedPlayer and playerButtons[selectedPlayer] then
@@ -488,22 +531,18 @@ spawn(function()
     end
 end)
 
--- Add existing players
 for _, player in ipairs(Players:GetPlayers()) do
     createPlayerButton(player)
 end
 
--- Add new players
 Players.PlayerAdded:Connect(function(player)
     createPlayerButton(player)
 end)
 
--- Remove leaving players
 Players.PlayerRemoving:Connect(function(player)
     if playerButtons[player] then
         playerButtons[player]:Destroy()
         playerButtons[player] = nil
-        
         if selectedPlayer == player then
             selectedPlayer = nil
             trollSubPanel.Visible = false
@@ -512,12 +551,10 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
--- Update canvas size
 listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     playersList.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
 end)
 
--- Toggle Button
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(0, 60, 0, 60)
 toggleButton.Position = UDim2.new(0, 10, 0.4, -30)
@@ -530,7 +567,6 @@ toggleButton.TextColor3 = Color3.fromRGB(255, 0, 255)
 toggleButton.Parent = screenGui
 Instance.new("UICorner", toggleButton)
 
--- RGB Effect (E Button)
 spawn(function()
     while true do
         toggleButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
@@ -538,7 +574,6 @@ spawn(function()
     end
 end)
 
--- Panel Toggle
 local isVisible = false
 toggleButton.MouseButton1Click:Connect(function()
     isVisible = not isVisible
@@ -551,7 +586,6 @@ toggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Draggable Toggle Button
 local toggleDragging, toggleDragStart, toggleStartPos = false, nil, nil
 
 toggleButton.InputBegan:Connect(function(input)
@@ -559,11 +593,9 @@ toggleButton.InputBegan:Connect(function(input)
         toggleDragging = true
         toggleDragStart = input.Position
         toggleStartPos = toggleButton.Position
-        input:Disable()
     end
 end)
 
--- Draggable Panel
 local dragging, dragStart, startPos = false, nil, nil
 panel.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -600,5 +632,4 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- İlk pozisyon ayarı
 updateTrollPanelPosition()
