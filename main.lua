@@ -1,20 +1,122 @@
+-- GİRİŞ EKRANI (RGB efektli, takılarak ve akışkan ilerleyen bar)
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
+local loadingGui = Instance.new("ScreenGui")
+loadingGui.Name = "LoadingScreen"
+loadingGui.IgnoreGuiInset = true
+loadingGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+loadingFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+loadingFrame.BackgroundTransparency = 0
+loadingFrame.ZIndex = 10
+loadingFrame.Parent = loadingGui
+
+for i = 1, 4 do
+    local border = Instance.new("Frame")
+    border.BackgroundTransparency = 0.2
+    border.BorderSizePixel = 0
+    border.ZIndex = 11
+    border.Parent = loadingFrame
+    if i == 1 then
+        border.Size = UDim2.new(1, 0, 0, 8)
+        border.Position = UDim2.new(0, 0, 0, 0)
+    elseif i == 2 then
+        border.Size = UDim2.new(1, 0, 0, 8)
+        border.Position = UDim2.new(0, 0, 1, -8)
+    elseif i == 3 then
+        border.Size = UDim2.new(0, 8, 1, 0)
+        border.Position = UDim2.new(0, 0, 0, 0)
+    else
+        border.Size = UDim2.new(0, 8, 1, 0)
+        border.Position = UDim2.new(1, -8, 0, 0)
+    end
+    spawn(function()
+        while loadingGui.Parent do
+            border.BackgroundColor3 = Color3.fromHSV((tick() + i) % 1, 1, 1)
+            wait(0.02)
+        end
+    end)
+end
+
+local loadingLabel = Instance.new("TextLabel")
+loadingLabel.Size = UDim2.new(0, 400, 0, 60)
+loadingLabel.Position = UDim2.new(0.5, -200, 0.5, 40)
+loadingLabel.BackgroundTransparency = 1
+loadingLabel.Text = "ENES GUI YÜKLENİYOR..."
+loadingLabel.Font = Enum.Font.GothamBlack
+loadingLabel.TextSize = 36
+loadingLabel.TextColor3 = Color3.fromRGB(255, 0, 255)
+loadingLabel.ZIndex = 13
+loadingLabel.Parent = loadingFrame
+
+spawn(function()
+    while loadingGui.Parent do
+        loadingLabel.TextColor3 = Color3.fromHSV(tick() % 1, 1, 1)
+        wait(0.05)
+    end
+end)
+
+local progressBarBack = Instance.new("Frame")
+progressBarBack.Size = UDim2.new(0, 320, 0, 18)
+progressBarBack.Position = UDim2.new(0.5, -160, 0.5, 100)
+progressBarBack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+progressBarBack.BorderSizePixel = 0
+progressBarBack.ZIndex = 12
+progressBarBack.Parent = loadingFrame
+Instance.new("UICorner", progressBarBack).CornerRadius = UDim.new(0, 9)
+
+local progressBar = Instance.new("Frame")
+progressBar.Size = UDim2.new(0, 0, 1, 0)
+progressBar.Position = UDim2.new(0, 0, 0, 0)
+progressBar.BackgroundColor3 = Color3.fromRGB(255, 0, 255)
+progressBar.BorderSizePixel = 0
+progressBar.ZIndex = 13
+progressBar.Parent = progressBarBack
+Instance.new("UICorner", progressBar).CornerRadius = UDim.new(0, 9)
+
+spawn(function()
+    local steps = {0.10, 0.37, 0.63, 0.72, 0.86, 1.0}
+    local delays = {1.2, 1.1, 1.5, 1.0, 1.0, 1.2}
+    local prev = 0
+    for i = 1, #steps do
+        local t0 = tick()
+        local duration = delays[i]
+        local start = prev
+        local finish = steps[i]
+        while tick() - t0 < duration do
+            local alpha = (tick() - t0) / duration
+            local value = start + (finish - start) * alpha
+            progressBar.Size = UDim2.new(value, 0, 1, 0)
+            progressBar.BackgroundColor3 = Color3.fromHSV(value, 1, 1)
+            wait()
+        end
+        progressBar.Size = UDim2.new(finish, 0, 1, 0)
+        progressBar.BackgroundColor3 = Color3.fromHSV(finish, 1, 1)
+        prev = finish
+    end
+end)
+
+wait(7)
+loadingGui:Destroy()
+
+-- ANA PANEL
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "EnesGUIv07"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = localPlayer:WaitForChild("PlayerGui")
 
--- Main Panel
 local panel = Instance.new("Frame")
 panel.Size = UDim2.new(0, 500, 0, 350)
 panel.Position = UDim2.new(0.5, -250, 0.5, -175)
 panel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 panel.BackgroundTransparency = 0.4
 panel.BorderSizePixel = 0
-panel.Visible = false
+panel.Visible = true
 panel.Parent = screenGui
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 10)
 
@@ -62,11 +164,10 @@ contentArea.BackgroundTransparency = 0.2
 contentArea.Parent = panel
 Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 8)
 
--- Tabs
+-- Sekmeler: Players, Scripts, Admin
+local tabs = {"Players", "Scripts", "Admin"}
 local tabButtons = {}
 local contentFrames = {}
-
-local tabs = {"Players", "Komutlar"}
 
 for _, tabName in ipairs(tabs) do
     local button = Instance.new("TextButton")
@@ -93,173 +194,33 @@ for _, tabName in ipairs(tabs) do
         for name, frame in pairs(contentFrames) do
             frame.Visible = (name == tabName)
         end
-    end)
-end
-
-contentFrames["Players"].Visible = true
-
--- Komutlar Tab Content
-local komutlarFrame = contentFrames["Komutlar"]
-
-local komutlarList = Instance.new("Frame")
-komutlarList.Size = UDim2.new(1, -20, 1, -20)
-komutlarList.Position = UDim2.new(0, 10, 0, 10)
-komutlarList.BackgroundTransparency = 1
-komutlarList.Parent = komutlarFrame
-
-local komutlarLayout = Instance.new("UIListLayout")
-komutlarLayout.Parent = komutlarList
-komutlarLayout.SortOrder = Enum.SortOrder.LayoutOrder
-komutlarLayout.Padding = UDim.new(0, 10)
-
--- FLY SCRIPT
-local FlyActive = false
-local FlyRGB = false
-local FlyBtn = nil
-local FlyConn = nil
-local FlyBody = nil
-local FlyGyro = nil
-local FlyInput = nil
-local FlyInputEnd = nil
-
-local function FlyToggle()
-    if FlyActive then
-        FlyActive = false
-        FlyRGB = false
-        if FlyBtn then
-            FlyBtn.Text = "Fly"
-            FlyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-        end
-        if FlyConn then FlyConn:Disconnect() end
-        if FlyBody then FlyBody:Destroy() end
-        if FlyGyro then FlyGyro:Destroy() end
-        if FlyInput then FlyInput:Disconnect() end
-        if FlyInputEnd then FlyInputEnd:Disconnect() end
-        return
-    end
-
-    FlyActive = true
-    FlyRGB = true
-    if FlyBtn then
-        FlyBtn.Text = "Fly (Aktif)"
-    end
-
-    spawn(function()
-        while FlyRGB do
-            if FlyBtn then
-                FlyBtn.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
+        for name, btn in pairs(tabButtons) do
+            if name == tabName then
+                spawn(function()
+                    while contentFrames[name].Visible do
+                        btn.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                        wait(0.05)
+                    end
+                    btn.TextColor3 = Color3.fromRGB(255,255,255)
+                end)
+            else
+                btn.TextColor3 = Color3.fromRGB(255,255,255)
             end
-            wait(0.05)
-        end
-        if FlyBtn then
-            FlyBtn.TextColor3 = Color3.fromRGB(255,255,255)
-        end
-    end)
-
-    local char = localPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = char.HumanoidRootPart
-
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-    bv.Velocity = Vector3.new(0,0,0)
-    bv.Parent = hrp
-
-    local bg = Instance.new("BodyGyro")
-    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-    bg.CFrame = hrp.CFrame
-    bg.Parent = hrp
-
-    FlyBody = bv
-    FlyGyro = bg
-
-    local speed = 60
-    local move = {f=0,b=0,l=0,r=0,u=0,d=0}
-
-    FlyConn = game:GetService("RunService").RenderStepped:Connect(function()
-        if not FlyActive then return end
-        local cam = workspace.CurrentCamera
-        local cf = cam.CFrame
-        local vel = Vector3.new()
-        if move.f == 1 then vel = vel + cf.LookVector end
-        if move.b == 1 then vel = vel - cf.LookVector end
-        if move.l == 1 then vel = vel - cf.RightVector end
-        if move.r == 1 then vel = vel + cf.RightVector end
-        if move.u == 1 then vel = vel + Vector3.new(0,1,0) end
-        if move.d == 1 then vel = vel - Vector3.new(0,1,0) end
-        if vel.Magnitude > 0 then vel = vel.Unit * speed end
-        bv.Velocity = vel
-        bg.CFrame = CFrame.new(hrp.Position, hrp.Position + cf.LookVector)
-    end)
-
-    local function onInput(input, gpe)
-        if gpe then return end
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            local k = input.KeyCode
-            if k == Enum.KeyCode.W then move.f = 1 end
-            if k == Enum.KeyCode.S then move.b = 1 end
-            if k == Enum.KeyCode.A then move.l = 1 end
-            if k == Enum.KeyCode.D then move.r = 1 end
-            if k == Enum.KeyCode.Space then move.u = 1 end
-            if k == Enum.KeyCode.LeftControl then move.d = 1 end
-        end
-    end
-    local function onInputEnd(input, gpe)
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            local k = input.KeyCode
-            if k == Enum.KeyCode.W then move.f = 0 end
-            if k == Enum.KeyCode.S then move.b = 0 end
-            if k == Enum.KeyCode.A then move.l = 0 end
-            if k == Enum.KeyCode.D then move.r = 0 end
-            if k == Enum.KeyCode.Space then move.u = 0 end
-            if k == Enum.KeyCode.LeftControl then move.d = 0 end
-        end
-    end
-    FlyInput = UserInputService.InputBegan:Connect(onInput)
-    FlyInputEnd = UserInputService.InputEnded:Connect(onInputEnd)
-end
-
-local komutlarListesi = {
-    {
-        Name = "Fly",
-        Callback = FlyToggle
-    },
-    {
-        Name = "ESP",
-        Callback = function()
-            print("ESP aktif edildi!") -- Buraya esp kodunu ekleyebilirsin
-        end
-    },
-    {
-        Name = "Noclip",
-        Callback = function()
-            print("Noclip aktif edildi!") -- Buraya noclip kodunu ekleyebilirsin
-        end
-    },
-}
-
-for _, komut in ipairs(komutlarListesi) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.Text = komut.Name
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.BackgroundTransparency = 0.3
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Parent = komutlarList
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    btn.MouseButton1Click:Connect(function()
-        if komut.Name == "Fly" then
-            FlyBtn = btn
-            komut.Callback()
-        else
-            komut.Callback()
         end
     end)
 end
 
--- Players Tab Content
+-- Varsayılan olarak Players sekmesi açık ve RGB
+contentFrames["Players"].Visible = true
+spawn(function()
+    while contentFrames["Players"].Visible do
+        tabButtons["Players"].TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        wait(0.05)
+    end
+    tabButtons["Players"].TextColor3 = Color3.fromRGB(255,255,255)
+end)
+
+-- Players Tab Content + Troll Butonu ve Troll Menüsü
 local selectedPlayer = nil
 local playerButtons = {}
 local isTrollButtonActive = false
@@ -555,6 +516,109 @@ listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     playersList.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
 end)
 
+-- ESP SİSTEMİ (tam vücut Highlight, RGB, şeffaf ve sadece ESP butonu RGB)
+local espHighlight = nil
+local espActive = false
+
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(0.8, 0, 0, 30)
+espButton.Position = UDim2.new(0.1, 0, 0.65, 0)
+espButton.Text = "ESP"
+espButton.Font = Enum.Font.Gotham
+espButton.TextSize = 14
+espButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+espButton.BackgroundTransparency = 0.3
+espButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+espButton.Parent = trollSubPanel
+Instance.new("UICorner", espButton).CornerRadius = UDim.new(0, 4)
+
+local function removeESP()
+    if espHighlight then
+        espHighlight:Destroy()
+        espHighlight = nil
+    end
+end
+
+espButton.MouseButton1Click:Connect(function()
+    if not selectedPlayer or not selectedPlayer.Character then return end
+    if espActive then
+        removeESP()
+        espActive = false
+        espButton.Text = "ESP"
+        espButton.TextColor3 = Color3.fromRGB(255,255,255)
+    else
+        removeESP()
+        espActive = true
+        espButton.Text = "ESP KAPAT"
+        espHighlight = Instance.new("Highlight")
+        espHighlight.Adornee = selectedPlayer.Character
+        espHighlight.FillTransparency = 0.7
+        espHighlight.OutlineTransparency = 0.1
+        espHighlight.Parent = selectedPlayer.Character
+        spawn(function()
+            while espActive and espHighlight and espHighlight.Parent do
+                local rgb = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+                espHighlight.FillColor = rgb
+                espHighlight.OutlineColor = rgb
+                espButton.TextColor3 = rgb
+                wait(0.05)
+            end
+            espButton.TextColor3 = Color3.fromRGB(255,255,255)
+        end)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if player == selectedPlayer then
+        removeESP()
+        espActive = false
+        espButton.Text = "ESP"
+        espButton.TextColor3 = Color3.fromRGB(255,255,255)
+    end
+end)
+
+panel:GetPropertyChangedSignal("Visible"):Connect(function()
+    if not panel.Visible then
+        removeESP()
+        espActive = false
+        espButton.Text = "ESP"
+        espButton.TextColor3 = Color3.fromRGB(255,255,255)
+    end
+end)
+
+-- SADECE PROFİL RESMİ VE İSİM (arka plan kutusu yok)
+local profileImage = Instance.new("ImageLabel")
+profileImage.Size = UDim2.new(0, 20, 0, 20)
+profileImage.Position = UDim2.new(0, 10, 1, -30)
+profileImage.BackgroundTransparency = 1
+profileImage.Parent = panel
+
+local nameLabel = Instance.new("TextLabel")
+nameLabel.Size = UDim2.new(0, 90, 0, 20)
+nameLabel.Position = UDim2.new(0, 34, 1, -30)
+nameLabel.BackgroundTransparency = 1
+nameLabel.Font = Enum.Font.GothamBold
+nameLabel.TextSize = 12
+nameLabel.TextColor3 = Color3.fromRGB(255,255,0)
+nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameLabel.Text = (#localPlayer.Name > 10 and string.sub(localPlayer.Name, 1, 8) .. "..." or localPlayer.Name)
+nameLabel.Parent = panel
+
+spawn(function()
+    while true do
+        nameLabel.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        wait(0.05)
+    end
+end)
+
+spawn(function()
+    local thumbType = Enum.ThumbnailType.HeadShot
+    local thumbSize = Enum.ThumbnailSize.Size48x48
+    local content, _ = Players:GetUserThumbnailAsync(localPlayer.UserId, thumbType, thumbSize)
+    profileImage.Image = content
+end)
+
+-- Toggle Button
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(0, 60, 0, 60)
 toggleButton.Position = UDim2.new(0, 10, 0.4, -30)
@@ -574,7 +638,7 @@ spawn(function()
     end
 end)
 
-local isVisible = false
+local isVisible = true
 toggleButton.MouseButton1Click:Connect(function()
     isVisible = not isVisible
     panel.Visible = isVisible
