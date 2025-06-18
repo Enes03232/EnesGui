@@ -220,7 +220,7 @@ spawn(function()
     tabButtons["Players"].TextColor3 = Color3.fromRGB(255,255,255)
 end)
 
--- SCRIPTS SEKME İÇİNE TÜM BUTONLAR (yazı boyutu küçültüldü ve scriptler eklendi)
+-- SCRIPTS SEKME İÇİNE TÜM BUTONLAR (MM2 birleşik!)
 local scriptButtons = {
     {Name = "Admin"},
     {Name = "Arsenal"},
@@ -704,10 +704,10 @@ spawn(function()
     profileImage.Image = content
 end)
 
--- Toggle Button
+-- Toggle Button (ekranın ortasının üstünde, biraz aşağıda)
 local toggleButton = Instance.new("TextButton")
 toggleButton.Size = UDim2.new(0, 60, 0, 60)
-toggleButton.Position = UDim2.new(0, 10, 0.4, -30)
+toggleButton.Position = UDim2.new(0.5, -30, 0.15, 0) -- Ortada ve üstte, biraz aşağıda
 toggleButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 toggleButton.BackgroundTransparency = 0.3
 toggleButton.Text = "E"
