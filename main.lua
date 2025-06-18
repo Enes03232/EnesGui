@@ -138,12 +138,12 @@ spawn(function()
     end
 end)
 
--- Tab Menu
+-- Tab Menu (daha şeffaf)
 local tabMenu = Instance.new("Frame")
 tabMenu.Size = UDim2.new(0, 120, 1, -40)
 tabMenu.Position = UDim2.new(0, 0, 0, 40)
 tabMenu.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-tabMenu.BackgroundTransparency = 0.3
+tabMenu.BackgroundTransparency = 0.55
 tabMenu.Parent = panel
 Instance.new("UICorner", tabMenu).CornerRadius = UDim.new(0, 8)
 
@@ -155,12 +155,12 @@ tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 tabLayout.VerticalAlignment = Enum.VerticalAlignment.Top
 tabLayout.Parent = tabMenu
 
--- Content Area
+-- Content Area (daha şeffaf)
 local contentArea = Instance.new("Frame")
 contentArea.Size = UDim2.new(1, -130, 1, -40)
 contentArea.Position = UDim2.new(0, 130, 0, 40)
 contentArea.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-contentArea.BackgroundTransparency = 0.2
+contentArea.BackgroundTransparency = 0.35
 contentArea.Parent = panel
 Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 8)
 
@@ -218,6 +218,99 @@ spawn(function()
         wait(0.05)
     end
     tabButtons["Players"].TextColor3 = Color3.fromRGB(255,255,255)
+end)
+
+-- SCRIPTS SEKME İÇİNE TÜM BUTONLAR (yazı boyutu küçültüldü ve scriptler eklendi)
+local scriptButtons = {
+    {Name = "Admin"},
+    {Name = "Arsenal"},
+    {Name = "MM2"},
+    {Name = "Build a Boat"},
+    {Name = "Blade Ball"},
+    {Name = "Piano"},
+    {Name = "Combat Warriors"},
+    {Name = "Anomic"},
+    {Name = "Prison Life"},
+}
+
+local scriptButtonObjects = {}
+
+for i, info in ipairs(scriptButtons) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 160, 0, 44)
+    btn.Position = UDim2.new(0, 20 + ((i-1)%2)*180, 0, 30 + math.floor((i-1)/2)*54)
+    btn.Text = info.Name
+    btn.Font = Enum.Font.GothamBlack
+    btn.TextSize = 16
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BackgroundTransparency = 0.65
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Visible = false
+    btn.AutoButtonColor = false
+    btn.Parent = contentFrames["Scripts"]
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundTransparency = 0.45
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundTransparency = 0.65
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        local running = true
+        spawn(function()
+            local start = tick()
+            while running and tick() - start < 2 do
+                btn.TextColor3 = Color3.fromHSV((tick() % 1), 1, 1)
+                wait(0.05)
+            end
+            btn.TextColor3 = Color3.fromRGB(255,255,255)
+        end)
+        wait(2)
+        running = false
+
+        -- Scriptler:
+        if info.Name == "Admin" then
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+        elseif info.Name == "Arsenal" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Insertl/QuotasHub/main/BETAv1.3"))()
+        elseif info.Name == "MM2" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/FOGOTY/mm2-piano-reborn/refs/heads/main/scr"))()
+        elseif info.Name == "Build a Boat" then
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/TheRealAsu/BABFT/refs/heads/main/Jan25_Source.lua'))()
+        elseif info.Name == "Blade Ball" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/SoyAdriYT/PitbullHubX/refs/heads/main/PitbullHubX.lua", true))()
+        elseif info.Name == "Piano" then
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/TALENTLESS/main/TALENTLESS", true))()
+            end)
+        elseif info.Name == "Combat Warriors" then
+            loadstring(game:HttpGet("https://soluna-script.vercel.app/combat-warriors.lua",true))()
+        elseif info.Name == "Anomic" then
+            loadstring(game:HttpGet("https://pastebin.com/raw/Fxvfh0Rk"))()
+        elseif info.Name == "Prison Life" then
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Denverrz/scripts/master/PRISONWARE_v1.3.txt"))()
+        end
+    end)
+
+    scriptButtonObjects[info.Name] = btn
+end
+
+tabButtons["Scripts"].MouseButton1Click:Connect(function()
+    for _, btn in pairs(scriptButtonObjects) do
+        btn.Visible = true
+    end
+end)
+tabButtons["Players"].MouseButton1Click:Connect(function()
+    for _, btn in pairs(scriptButtonObjects) do
+        btn.Visible = false
+    end
+end)
+tabButtons["Admin"].MouseButton1Click:Connect(function()
+    for _, btn in pairs(scriptButtonObjects) do
+        btn.Visible = false
+    end
 end)
 
 -- Players Tab Content + Troll Butonu ve Troll Menüsü
@@ -577,14 +670,7 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-panel:GetPropertyChangedSignal("Visible"):Connect(function()
-    if not panel.Visible then
-        removeESP()
-        espActive = false
-        espButton.Text = "ESP"
-        espButton.TextColor3 = Color3.fromRGB(255,255,255)
-    end
-end)
+-- panel:GetPropertyChangedSignal("Visible") kısmı kaldırıldı, ESP panel kapansa da açık kalır
 
 -- SADECE PROFİL RESMİ VE İSİM (arka plan kutusu yok)
 local profileImage = Instance.new("ImageLabel")
