@@ -230,7 +230,7 @@ local scriptButtons = {
     {Name = "Piano"},
     {Name = "Combat Warriors"},
     {Name = "Anomic"},
-    {Name = "Prison Life"},
+    {Name = "Prison Life"}
 }
 
 local scriptButtonObjects = {}
@@ -783,3 +783,190 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 updateTrollPanelPosition()
+
+
+
+-- === Admin Paneli İçin Global RGB ESP Sistemi ===
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+local espAdminEnabled = false
+local adminHighlights = {}
+
+local function getRGBColor(t)
+	local r = math.sin(t + 0) * 127 + 128
+	local g = math.sin(t + 2) * 127 + 128
+	local b = math.sin(t + 4) * 127 + 128
+	return Color3.fromRGB(r, g, b)
+end
+
+local function addAdminESP(player)
+	if not player.Character or adminHighlights[player] then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "AdminESP"
+	highlight.Adornee = player.Character
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0
+	highlight.OutlineColor = Color3.new(1, 0, 0)
+	highlight.Parent = CoreGui
+
+	adminHighlights[player] = highlight
+end
+
+local function updateAdminESP()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= Players.LocalPlayer then
+			addAdminESP(player)
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		wait(1)
+		if espAdminEnabled then
+			addAdminESP(player)
+		end
+	end)
+end)
+
+RunService.RenderStepped:Connect(function()
+	if espAdminEnabled then
+		local color = getRGBColor(tick())
+		for _, highlight in pairs(adminHighlights) do
+			if highlight and highlight:IsA("Highlight") then
+				highlight.OutlineColor = color
+			end
+		end
+	end
+end)
+
+-- Geliştirilmiş ESP Butonu (Admin Panel) - RGB uyumlu
+local adminESPButton = Instance.new("TextButton")
+adminESPButton.Size = UDim2.new(0, 160, 0, 40)
+adminESPButton.Position = UDim2.new(0, 20, 0, 30)
+adminESPButton.Text = "ESP"
+adminESPButton.Font = Enum.Font.GothamBlack
+adminESPButton.TextSize = 16
+adminESPButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+adminESPButton.BackgroundTransparency = 0.25
+adminESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+adminESPButton.AutoButtonColor = false
+adminESPButton.Parent = contentFrames["Admin"]
+Instance.new("UICorner", adminESPButton).CornerRadius = UDim.new(0, 6)
+
+-- RGB animasyon
+local espRGBLoop = false
+local function startESPButtonRGB()
+	espRGBLoop = true
+	spawn(function()
+		while espRGBLoop do
+			adminESPButton.TextColor3 = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+			wait(0.05)
+		end
+		adminESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end)
+end
+
+adminESPButton.MouseEnter:Connect(function()
+	adminESPButton.BackgroundTransparency = 0.15
+end)
+adminESPButton.MouseLeave:Connect(function()
+	adminESPButton.BackgroundTransparency = 0.25
+end)
+
+-- RGB mesaj gösterme fonksiyonu
+local function showRGBMessage(message, duration)
+    -- Mesajı panelin ortasında göster
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(0, 200, 0, 30)
+    messageLabel.Position = UDim2.new(0.5, -100, 0.5, -15)
+    messageLabel.Text = message
+    messageLabel.Font = Enum.Font.GothamBlack
+    messageLabel.TextSize = 16
+    messageLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    messageLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    messageLabel.BackgroundTransparency = 0.4
+    messageLabel.Parent = contentFrames["Admin"]
+    Instance.new("UICorner", messageLabel).CornerRadius = UDim.new(0, 6)
+
+    -- RGB animasyonu başlat
+    local rgbLoop = true
+    local rgbThread = spawn(function()
+        while rgbLoop do
+            messageLabel.TextColor3 = Color3.fromHSV(tick() % 1, 1, 1)
+            wait(0.05)
+        end
+    end)
+
+    -- Mesajı belirtilen süre kadar göster
+    wait(duration)
+    rgbLoop = false
+    messageLabel:Destroy()
+    rgbThread:Destroy()
+end
+
+-- Jerk Off Butonu (Admin Panel)
+local jerkOffButton = Instance.new("TextButton")
+jerkOffButton.Size = UDim2.new(0, 160, 0, 44)
+jerkOffButton.Position = UDim2.new(0, 20, 0, 84)
+jerkOffButton.Text = "Jerk Off"
+jerkOffButton.Font = Enum.Font.GothamBlack
+jerkOffButton.TextSize = 16
+jerkOffButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+jerkOffButton.BackgroundTransparency = 0.25
+jerkOffButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+jerkOffButton.AutoButtonColor = false
+jerkOffButton.Parent = contentFrames["Admin"]
+Instance.new("UICorner", jerkOffButton).CornerRadius = UDim.new(0, 6)
+
+jerkOffButton.MouseEnter:Connect(function()
+    jerkOffButton.BackgroundTransparency = 0.15
+end)
+jerkOffButton.MouseLeave:Connect(function()
+    jerkOffButton.BackgroundTransparency = 0.25
+end)
+
+jerkOffButton.MouseButton1Click:Connect(function()
+    -- 2 saniyelik RGB efekti
+    local running = true
+    spawn(function()
+        local start = tick()
+        while running and tick() - start < 2 do
+            jerkOffButton.TextColor3 = Color3.fromHSV(tick() % 1, 1, 1)
+            wait(0.05)
+        end
+        jerkOffButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end)
+
+    -- Scripti çalıştır
+    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+
+    if humanoid.RigType == Enum.HumanoidRigType.R6 then
+        loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))()
+    elseif humanoid.RigType == Enum.HumanoidRigType.R15 then
+        loadstring(game:HttpGet("https://pastefy.app/YZoglOyJ/raw"))()
+    end
+
+    wait(2)
+    running = false
+end)
+
+adminESPButton.MouseButton1Click:Connect(function()
+	espAdminEnabled = not espAdminEnabled
+	if espAdminEnabled then
+		updateAdminESP()
+		startESPButtonRGB()
+	else
+		for _, highlight in pairs(adminHighlights) do
+			if highlight then
+				highlight:Destroy()
+			end
+		end
+		adminHighlights = {}
+		espRGBLoop = false
+	end
+end)
