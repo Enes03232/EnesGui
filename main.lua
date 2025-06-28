@@ -164,8 +164,8 @@ contentArea.BackgroundTransparency = 0.35
 contentArea.Parent = panel
 Instance.new("UICorner", contentArea).CornerRadius = UDim.new(0, 8)
 
--- Sekmeler: Players, Scripts, Commands
-local tabs = {"Players", "Scripts", "Commands"}
+-- Sekmeler: Players, Scripts, Admin
+local tabs = {"Players", "Scripts", "Admin"}
 local tabButtons = {}
 local contentFrames = {}
 
